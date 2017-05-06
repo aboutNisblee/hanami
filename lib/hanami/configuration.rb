@@ -93,7 +93,13 @@ module Hanami
     #     # ...
     #   end
     def mailer(&blk)
-      settings.put_if_absent(:mailer, blk)
+      mailer_settings.push(blk) if block_given?
+    end
+
+    # @since next
+    # @api private
+    def mailer_settings
+      settings.fetch_or_store(:mailers, [])
     end
 
     # @since 0.9.0
@@ -112,14 +118,16 @@ module Hanami
 
     # Configure logger
     #
-    # @since 1.0.0.beta1
+    # @since 1.0.0
     #
-    # @param options [Hash] a set of options
+    # @param options [Array] a set of options
     #
     # @see Hanami.logger
     # @see Hanami::Logger
     #
-    # @example
+    # @see http://hanamirb.org/guides/projects/logging/
+    #
+    # @example Basic Usage
     #   # config/environment.rb
     #   # ...
     #   Hanami.configure do
@@ -128,8 +136,18 @@ module Hanami
     #       logger level: :debug
     #     end
     #   end
-    def logger(options = nil)
-      if options.nil?
+    #
+    # @example Daily Rotation
+    #   # config/environment.rb
+    #   # ...
+    #   Hanami.configure do
+    #     # ...
+    #     environment :development do
+    #       logger 'daily', level: :debug
+    #     end
+    #   end
+    def logger(*options)
+      if options.empty?
         settings.fetch(:logger, nil)
       else
         settings[:logger] = options
@@ -137,7 +155,7 @@ module Hanami
     end
 
     # Configure settings for the current environment
-    # @since 1.0.0.beta1
+    # @since 1.0.0
     #
     # @param name [Symbol] the name of the Hanami environment
     #

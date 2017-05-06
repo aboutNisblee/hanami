@@ -13,14 +13,14 @@ module Hanami
     # @since 0.9.0
     # @api private
     register 'all' do
-      requires 'logger', 'mailer', 'code', 'model', 'apps', 'finalizers'
+      requires 'logger', 'code', 'mailer', 'model', 'apps', 'finalizers'
 
       resolve { true }
     end
 
     # Setup project's logger
     #
-    # @since 1.0.0.beta1
+    # @since 1.0.0
     # @api private
     register 'logger' do
       prepare do
@@ -28,7 +28,7 @@ module Hanami
       end
 
       resolve do |configuration|
-        Hanami::Logger.new(Hanami.environment.project_name, configuration.logger) unless configuration.logger.nil?
+        Hanami::Logger.new(Hanami.environment.project_name, *configuration.logger) unless configuration.logger.nil?
       end
     end
 
@@ -55,7 +55,7 @@ module Hanami
       run do
         directory = Hanami.root.join('lib')
 
-        if Hanami.code_reloading?
+        if Components['environment'].code_reloading?
           Utils.reload!(directory)
         else
           Utils.require!(directory)
@@ -77,10 +77,6 @@ module Hanami
     #   Hanami::Components['model'] # => nil
     register 'model' do
       requires 'logger', 'model.configuration', 'model.sql'
-
-      prepare do
-        Hanami::Model.disconnect if Components['model.configuration']
-      end
 
       resolve do
         if Components['model.configuration']
@@ -169,7 +165,7 @@ module Hanami
 
     # Tries to evaluate hanami-mailer configuration
     #
-    # @since 1.0.0.beta1
+    # @since 1.0.0
     # @api private
     #
     # @example With hanami-mailer
@@ -182,15 +178,23 @@ module Hanami
       end
 
       resolve do |configuration|
-        Hanami::Mailer.configuration = Hanami::Mailer::Configuration.new if Hanami.code_reloading?
-        Hanami::Mailer.configure(&configuration.mailer)
-        Hanami::Mailer.configuration
+        unless configuration.mailer_settings.empty?
+          if Hanami.code_reloading? && !Hanami::Mailer.configuration.nil?
+            Hanami::Mailer.configuration = Hanami::Mailer.configuration.dup
+          end
+
+          configuration.mailer_settings.each do |settings|
+            Hanami::Mailer.configure(&settings)
+          end
+
+          Hanami::Mailer.configuration
+        end
       end
     end
 
     # Tries to load hanami-mailer
     #
-    # @since 1.0.0.beta1
+    # @since 1.0.0
     # @api private
     #
     # @example

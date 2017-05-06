@@ -84,10 +84,14 @@ module Hanami
   #
   # NOTE: This MUST NOT be wrapped by a Mutex, because it would cause a deadlock.
   #
+  # @return [NilClass]
+  #
   # @since 0.9.0
   def self.boot
     Components.release if code_reloading?
     Components.resolve('all')
+    Hanami::Model.disconnect if defined?(Hanami::Model)
+    nil
   end
 
   # Main application that mounts many Rack and/or Hanami applications.
@@ -196,7 +200,7 @@ module Hanami
   #
   # @return [TrueClass,FalseClass] the result of the check
   #
-  # @since 1.0.0.beta1
+  # @since 1.0.0
   # @api private
   #
   # @see http://hanamirb.org/guides/projects/code-reloading/
@@ -210,7 +214,7 @@ module Hanami
   #
   # @return [Hanami::Logger] the logger
   #
-  # @since 1.0.0.beta1
+  # @since 1.0.0
   def self.logger
     Components['logger']
   end

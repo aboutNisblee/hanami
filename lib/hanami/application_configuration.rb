@@ -1,5 +1,4 @@
 require 'hanami/utils/kernel'
-require 'hanami/utils/deprecation'
 require 'hanami/environment'
 require 'hanami/middleware'
 require 'hanami/config/cookies'
@@ -20,7 +19,7 @@ module Hanami
     # @see Hanami::Configuration#ssl?
     SSL_SCHEME = 'https'.freeze
 
-    # @since 1.0.0.beta1
+    # @since 1.0.0
     # @api private
     DEFAULT_SSL_PORT = 443
 
@@ -841,17 +840,6 @@ module Hanami
       else
         @default_response_format
       end
-    end
-
-    # Set a format as default fallback for all the requests without a strict
-    # requirement for the mime type.
-    #
-    # @since 0.1.0
-    #
-    # @deprecated Use {#default_request_format} instead.
-    def default_format(format = nil)
-      Hanami::Utils::Deprecation.new('default_format is deprecated, please use default_request_format')
-      default_request_format(format)
     end
 
     # The URI scheme for this application.

@@ -85,10 +85,10 @@ EOF
   end
 
   context "logging" do
-    context "when enabled" do
-      let(:log)     { "log/development.log" }
-      let(:project) { "bookshelf" }
+    let(:log)     { "log/development.log" }
+    let(:project) { "bookshelf" }
 
+    context "when enabled" do
       it "logs request" do
         with_project(project) do
           touch log
@@ -102,6 +102,20 @@ EOF
           content = contents(log)
           expect(content).to include("[#{project}] [INFO]")
           expect(content).to match(%r{HTTP/1.1 GET 200 (.*) /})
+        end
+      end
+    end
+
+    context "when not enabled" do
+      it "does not log request" do
+        with_project(project) do
+          replace "config/environment.rb", "logger level: :debug", ""
+
+          server do
+            visit "/"
+          end
+
+          expect(log).to_not be_an_existing_file
         end
       end
     end
@@ -381,6 +395,62 @@ EOF
           expect(page).to have_title("Hanami | The web, with simplicity")
           generate "action web home#index --url=/"
 
+          visit "/"
+          expect(page).to have_title("Hanami | The web, with simplicity")
+        end
+      end
+    end
+  end
+
+  context "without hanami model" do
+    it "uses custom model domain" do
+      project_without_hanami_model("bookshelf", gems: ['dry-struct']) do
+        write "lib/entities/access_token.rb", <<-EOF
+require 'dry-struct'
+require 'securerandom'
+
+module Types
+  include Dry::Types.module
+end
+
+class AccessToken < Dry::Struct
+  attribute :id,     Types::String.default { SecureRandom.uuid }
+  attribute :secret, Types::String
+  attribute :digest, Types::String
+end
+EOF
+        generate "action web access_tokens#show --url=/access_tokens/:id"
+        rewrite  "apps/web/controllers/access_tokens/show.rb", <<-EOF
+module Web::Controllers::AccessTokens
+  class Show
+    include Web::Action
+    expose :access_token
+
+    def call(params)
+      @access_token = AccessToken.new(id: '1', secret: 'shh', digest: 'abc')
+    end
+  end
+end
+EOF
+        rewrite  "apps/web/templates/access_tokens/show.html.erb", <<-EOF
+<h1><%= access_token.secret %></h1>
+EOF
+
+        server do
+          visit "/access_tokens/1"
+          visit "/access_tokens/1" # forces code reloading
+          expect(page).to have_content("shh")
+        end
+      end
+    end
+  end
+
+  context "without mailer" do
+    it "returns page" do
+      with_project do
+        remove_block "config/environment.rb", "mailer do"
+
+        server do
           visit "/"
           expect(page).to have_title("Hanami | The web, with simplicity")
         end

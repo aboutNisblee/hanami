@@ -1,7 +1,27 @@
 # Hanami
 The web, with simplicity.
 
-## v1.0.0.beta3 (unreleased)
+## v1.0.0 - 2017-04-06
+
+## v1.0.0.rc1 - 2017-03-31
+### Added
+- [Luca Guidi] Allow `logger` setting in `config/environment.rb` to accept arbitrary arguments to make `Hanami::Logger` to be compatible with Ruby's `Logger`. (eg. `logger 'daily', level: :info`)
+
+### Fixed
+- [Luca Guidi] Ensure code reloading don't misconfigure mailer settings (regression from v1.0.0.beta3)
+- [Luca Guidi] Ensure database disconnection to happen in the same thread of `Hanami.boot`
+- [Luca Guidi] Ensure `mailer` block in `config/environment.rb` to be evaluated multiple times, according to the current Hanami environment
+- [Luca Guidi] Ensure a Hanami project to require only once the code under `lib/`
+
+## v1.0.0.beta3 - 2017-03-17
+### Fixed
+- [Luca Guidi] Try to disconnect from database at the boot time. This is useful to prune stale connection during production deploys.
+- [Tobias Sandelius] Don't mount `Hanami::CommonLogger` middleware if logging is disabled for the project.
+- [Anton Davydov] Don't configure mailers, if it's mailing is disabled for the project.
+- [Marcello Rocha] Ensure code reloading don't misconfigure mailer settings
+
+### Changed
+- [Luca Guidi] Removed deprecated `ApplicationConfiguration#default_format`. Use `#default_request_format` instead.
 
 ## v1.0.0.beta2 - 2017-03-02
 
